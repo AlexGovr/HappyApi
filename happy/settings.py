@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'couriers',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
