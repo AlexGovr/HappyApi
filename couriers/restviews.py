@@ -17,12 +17,10 @@ class CourierViewset(viewsets.ModelViewSet):
         for i, _dat in enumerate(data):
             srl = self.get_serializer(data=_dat)
             if srl.is_valid():
-                print(srl.validated_data)
                 allsrl.append(srl)
                 couriers.append({'id': _dat['courier_id']})
             else:
                 f_srl = self.get_serializer
-                print(_dat['courier_id'], srl.data)
                 errors = [{'id': _dat['courier_id']} for _dat in data[i:] if not f_srl(data=_dat).is_valid()]
                 resp_data = {'validation_error':{'couriers': errors}}
                 return Response(resp_data, status=status.HTTP_400_BAD_REQUEST)
