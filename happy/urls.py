@@ -19,7 +19,7 @@ from couriers import restviews
 from rest_framework.routers import DefaultRouter
 
 # Create a router and register viewsets
-router = DefaultRouter()
+router = DefaultRouter(trailing_slash=False)
 router.register('couriers', restviews.CourierViewset)
 
 urlpatterns = [
