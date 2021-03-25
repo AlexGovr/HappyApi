@@ -1,5 +1,6 @@
 from time import strptime, strftime
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from .models import Courier
 
 
@@ -25,7 +26,10 @@ class CourierSerializer(serializers.ModelSerializer):
         return data
 
     def validate_working_hours(self, value):
-        _time = [parse_timeint(t) for t in value.split(',')]
+        try:
+            _time = [parse_timeint(t) for t in value.split(',')]
+        except ValueError as e:
+            raise ValidationError(detail=str(e))
         _str_list = [srl_timeint(*t) for t in _time]
         _str = ','.join(_str_list)
         return _str
