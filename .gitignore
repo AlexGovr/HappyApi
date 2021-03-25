@@ -2,3 +2,4 @@
 config/
 .env/
 static/
+r.py
