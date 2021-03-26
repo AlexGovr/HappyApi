@@ -1,6 +1,7 @@
 from rest_framework import status, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from .serializers import CourierSerializer, OrderSerializer
 from .models import Courier, Order
 
@@ -50,3 +51,7 @@ class OrderViewset(BaseViewset):
     queryset = Order.objects.all()
     id_fieldname = 'order_id'
     resp_data_key = 'orders'
+
+    @action(methods=['POST',], detail=True, url_path='assign')
+    def assign(self, request):
+        return Response(status=status.HTTP_200_OK)
