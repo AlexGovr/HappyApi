@@ -13,10 +13,11 @@ class CourierSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def to_internal_value(self, data):
-        whours = data['working_hours']
-        if not isinstance(whours, list):
-            raise serializers.ValidationError('working hours intervals must be contained in a list')
-        data['working_hours'] = ','.join(whours)
+        whours = data.get('working_hours', None)
+        if whours:
+            if not isinstance(whours, list):
+                raise serializers.ValidationError('working hours intervals must be contained in a list')
+            data['working_hours'] = ','.join(whours)
         return super().to_internal_value(data)
 
     def to_representation(self, inst):
