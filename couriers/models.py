@@ -17,3 +17,10 @@ class Courier(models.Model):
     @property
     def payload(self):
         return __class__.payload_dict[self.courier_type]
+
+
+class Order(models.Model):
+    order_id = models.IntegerField(primary_key=True)
+    region = models.IntegerField(blank=False)
+    weight = models.FloatField(blank=False)
+    delivery_hours = models.CharField(max_length=240, blank=False)
