@@ -21,6 +21,7 @@ from rest_framework.routers import DefaultRouter
 # Create a router and register viewsets
 router = DefaultRouter(trailing_slash=False)
 router.register('couriers', restviews.CourierViewset)
+router.register('orders', restviews.OrderViewset)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

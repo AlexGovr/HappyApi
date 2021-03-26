@@ -1,32 +1,40 @@
 from time import strptime, strftime
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from .models import Courier
+from .models import Courier, Order
 
 
-class CourierSerializer(serializers.ModelSerializer):
+class CustomTimeSerializer(serializers.ModelSerializer):
 
-    working_hours = serializers.CharField(required=True)
+    time_field_name = ''
 
-    class Meta:
-        model = Courier
-        fields = '__all__'
+    def __init__(self, *args, **kwargs):
+        '''assign proper name for time_field validation method'''
+        field_name = self.__class__.time_field_name
+        validation_method_name = f'validate_{field_name}'
+        setattr(self, validation_method_name, self._validate_time)
+        super().__init__(*args, **kwargs)
 
     def to_internal_value(self, data):
-        whours = data.get('working_hours', None)
+        '''transform time intervals list to a comma-separated string'''
+        whours = data.get(self.time_field_name, None)
         if whours:
+            # raise if not list
             if not isinstance(whours, list):
-                raise serializers.ValidationError('working hours intervals must be contained in a list')
-            data['working_hours'] = ','.join(whours)
+                raise serializers.ValidationError(f'{self.time_field_name} values intervals'
+                                                    'must be contained in a list')
+            data[self.time_field_name] = ','.join(whours)
         return super().to_internal_value(data)
 
     def to_representation(self, inst):
+        '''transform time intervals str to list'''
         data = super().to_representation(inst)
-        whours = data['working_hours']
-        data['working_hours'] = whours.split(',')
+        whours = data[self.time_field_name]
+        data[self.time_field_name] = whours.split(',')
         return data
 
-    def validate_working_hours(self, value):
+    def _validate_time(self, value):
+        '''validate time string by simply parsing it'''
         try:
             _time = [parse_timeint(t) for t in value.split(',')]
         except ValueError as e:
@@ -34,6 +42,23 @@ class CourierSerializer(serializers.ModelSerializer):
         _str_list = [srl_timeint(*t) for t in _time]
         _str = ','.join(_str_list)
         return _str
+
+class CourierSerializer(CustomTimeSerializer):
+
+    time_field_name = 'working_hours'
+
+    class Meta:
+        model = Courier
+        fields = '__all__'
+
+
+class OrderSerializer(CustomTimeSerializer):
+
+    time_field_name = 'delivery_hours'
+
+    class Meta:
+        model = Order
+        fields = '__all__'
 
 
 def parse_timeint(timeinterval):
