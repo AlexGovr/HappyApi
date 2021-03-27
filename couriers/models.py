@@ -85,6 +85,12 @@ class Order(models.Model):
             return True
         return False
 
+    def set_complete(self, courier, complete_time):
+        self.courier_id = courier
+        self.complete_time = complete_time
+        self.completed = True
+        self.save()
+
 
 def opt_byweight(orders, sm):
     '''recursively packs list with orders to provide

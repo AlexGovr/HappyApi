@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from .serializers import CourierSerializer, OrderSerializer
 from .models import Courier, Order
+from .time_parse import parse_datetime
 
 
 class BaseViewset(viewsets.ModelViewSet):
@@ -56,12 +57,11 @@ class OrderViewset(BaseViewset):
     @action(methods=['POST'], detail=False, url_path='assign')
     def assign(self, request):
         courier_id = request.data['courier_id']
-        try:
-            courier = Courier.objects.get(courier_id=courier_id)
-        except ObjectDoesNotExist as e:
-            resp_data = {'detail': 'no courier with such courier_id'}
-            return Response(resp_data, status = status.HTTP_400_BAD_REQUEST)
+        cour_or_404 = get_or_400(Courier, 'courier_id', courier_id)
+        if isinstance(cour_or_404, Response):
+            return cour_or_404
 
+        courier = cour_or_404
         active_orders = self.queryset.filter(completed=False, courier_id=courier_id)
         if active_orders:
             orders = active_orders
@@ -76,3 +76,33 @@ class OrderViewset(BaseViewset):
             resp_data = {'orders': ids, 'assign_time': assign_time}
 
         return Response(resp_data, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=False, url_path='complete')
+    def complete(self, request):
+        courier_id = request.data['courier_id']
+        order_id = request.data['order_id']
+        complete_time = request.data['complete_time']
+
+        cour_or_404 = get_or_400(Courier, 'courier_id', courier_id)
+        if isinstance(cour_or_404, Response):
+            return cour_or_404
+
+        ord_or_404 = get_or_400(Order, 'order_id', order_id)
+        if isinstance(ord_or_404, Response):
+            return ord_or_404
+
+        complete_time = parse_datetime(complete_time)
+        ord_or_404.set_complete(cour_or_404, complete_time)
+
+        resp_data = {'order_id': order_id}
+        return Response(resp_data, status=status.HTTP_200_OK)
+
+
+def get_or_400(model, field_name, val):
+    try:
+        inst = model.objects.get(**{field_name: val})
+        return inst
+    except ObjectDoesNotExist:
+        name = model.__name__.lower()
+        resp_data = {'detail': f'no {name} with such {field_name}'}
+        return Response(resp_data, status = status.HTTP_400_BAD_REQUEST)
