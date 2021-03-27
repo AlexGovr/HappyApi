@@ -58,7 +58,7 @@ class OrderSerializer(CustomTimeSerializer):
 
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = ['order_id', 'delivery_hours', 'region', 'weight']
 
 
 def parse_timeint(timeinterval):
