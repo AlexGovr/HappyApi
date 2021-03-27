@@ -28,7 +28,7 @@ class Courier(models.Model):
 
     def assign_orders(self, orders):
         assign_time = datetime_now()
-        orders = self.filter_orders(orders)
+        orders = sorted(self.filter_orders(orders), reverse=True)
         _, chosen = opt_byweight(orders, self.payload)
         if not chosen:
             return None, None
@@ -54,7 +54,7 @@ class Courier(models.Model):
     def filter_by_time(self, orders):
         orders = [ordr for ordr in orders
                     if ordr._fits_schedule(self.whours)]
-        return sorted(orders, reverse=True, key=lambda o: o.weight)
+        return orders
 
 
 class Order(models.Model):
@@ -90,6 +90,9 @@ class Order(models.Model):
         self.complete_time = complete_time
         self.completed = True
         self.save()
+    
+    def __lt__(self, order):
+        return self.weight < order.weight
 
 
 def opt_byweight(orders, sm):
