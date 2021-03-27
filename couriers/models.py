@@ -1,8 +1,7 @@
-from django.db import models
+from time import strptime, strftime
 from datetime import datetime
-# from couriers import serializers
+from django.db import models
 
-# parse_timeint = serializers.parse_timeint
 
 class Courier(models.Model):
     type_choices = [('foot', 'foot'), ('bike', 'bike'), ('car', 'car'),]
@@ -26,11 +25,12 @@ class Courier(models.Model):
         orders = self.filter_orders(orders)
         chosen = opt_byweight(orders, self.payload)
         if not chosen:
-            return []
+            return None, None
         for ordr in chosen:
             ordr.courier_id = self.courier_id
             ordr.assign_time = assign_time
-            ordr.save()
+            # ordr.save()
+        assign_time = srl_time(assign_time)
         return chosen, assign_time
 
     def filter_orders(self, orders):
@@ -82,4 +82,22 @@ def opt_byweight(orders, sm):
             max_sm = _sm
             max_arr = [ordr] + _orders
     return max_sm, max_arr
-    
+
+
+def parse_timeint(timeinterval):
+    stamps = timeinterval.split('-')
+    begin = parse_time(stamps[0])
+    end = parse_time(stamps[1])
+    return begin, end
+
+
+def parse_time(time_str):
+    return strptime(time_str, '%H:%M')
+
+
+def srl_timeint(begin, end):
+    return f'{srl_time(begin)}-{srl_time(end)}'
+
+
+def srl_time(time):
+    return strftime('%H:%M', time)
