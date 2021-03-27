@@ -1,6 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import status, viewsets
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, bad_request
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .serializers import CourierSerializer, OrderSerializer
@@ -58,8 +58,8 @@ class OrderViewset(BaseViewset):
         courier_id = request.data['courier_id']
         try:
             courier = Courier.objects.get(courier_id=courier_id)
-        except ObjectDoesNotExist:
-            pass
+        except ObjectDoesNotExist as e:
+            return bad_request(request, e)
         
         orders, assign_time = courier.assign_orders(self.queryset)
         if orders is None:
