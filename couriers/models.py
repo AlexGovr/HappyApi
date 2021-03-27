@@ -31,7 +31,7 @@ class Courier(models.Model):
         orders = sorted(self.filter_orders(orders), reverse=True)
         _, chosen = opt_byweight(orders, self.payload)
         if not chosen:
-            return None, None
+            return [], None
         for ordr in chosen:
             ordr.courier_id = self
             ordr.assign_time = assign_time
@@ -55,6 +55,19 @@ class Courier(models.Model):
         orders = [ordr for ordr in orders
                     if ordr._fits_schedule(self.whours)]
         return orders
+
+    def perform_changes(self, prev):
+        if (self.working_hours != prev.working_hours
+                or self.regions != prev.regions
+                or self.payload < prev.payload):
+            orders = Order.objects.filter(courier_id=self.courier_id, completed=False)
+            _orders, _ = self.assign_orders(orders)
+            # set lost orders unassigned
+            for ordr in orders:
+                if ordr not in _orders:
+                    ordr.courier_id = None
+                    ordr.assign_time = None
+                    ordr.save()
 
 
 class Order(models.Model):
@@ -93,6 +106,9 @@ class Order(models.Model):
     
     def __lt__(self, order):
         return self.weight < order.weight
+    
+    def __gt__(self, order):
+        return self.weight > order.weight
 
 
 def opt_byweight(orders, sm):

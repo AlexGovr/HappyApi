@@ -1,11 +1,12 @@
+from copy import deepcopy
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import status, viewsets
 from rest_framework.exceptions import ValidationError, bad_request
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from .serializers import CourierSerializer, OrderSerializer
 from .models import Courier, Order
 from .time_parse import parse_datetime
+from .serializers import CourierSerializer, OrderSerializer
 
 
 class BaseViewset(viewsets.ModelViewSet):
@@ -46,6 +47,26 @@ class CourierViewset(BaseViewset):
     queryset = Courier.objects.all()
     id_fieldname = 'courier_id'
     resp_data_key = 'couriers'
+
+    def update(self, request, *args, **kwargs):
+        '''almost fully copied from the inherited class
+        except orders validity check'''
+        partial = kwargs.pop('partial', False)
+        courier = self.get_object()
+        # remember old courier object
+        old = deepcopy(courier)
+        serializer = self.get_serializer(instance=courier, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        # check orders are valid after courier is changed
+        print(serializer.instance)
+        print('old', old.payload)
+        serializer.instance.perform_changes(old)
+
+        if getattr(courier, '_prefetched_objects_cache', None):
+            courier._prefetched_objects_cache = {}
+        
+        return Response(serializer.data)
 
 
 class OrderViewset(BaseViewset):
