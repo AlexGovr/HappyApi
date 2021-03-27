@@ -59,12 +59,20 @@ class OrderViewset(BaseViewset):
         try:
             courier = Courier.objects.get(courier_id=courier_id)
         except ObjectDoesNotExist as e:
-            return bad_request(request, e)
-        
-        orders, assign_time = courier.assign_orders(self.queryset)
+            resp_data = {'detail': 'no courier with such courier_id'}
+            return Response(resp_data, status = status.HTTP_400_BAD_REQUEST)
+
+        active_orders = self.queryset.filter(completed=False, courier_id=courier_id)
+        if active_orders:
+            orders = active_orders
+            assign_time = orders[0].assign_time
+        else:
+            orders, assign_time = courier.assign_orders(self.queryset)
+
         if orders is None:
             resp_data = {'orders': []}
         else:
             ids = [{'id': ordr.order_id} for ordr in orders]
             resp_data = {'orders': ids, 'assign_time': assign_time}
+
         return Response(resp_data, status=status.HTTP_200_OK)
