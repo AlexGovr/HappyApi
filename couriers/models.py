@@ -24,3 +24,7 @@ class Order(models.Model):
     region = models.IntegerField(blank=False)
     weight = models.FloatField(blank=False)
     delivery_hours = models.CharField(max_length=240, blank=False)
+    courier_id = models.ForeignKey(Courier, null=True, on_delete=models.SET_NULL)
+    completed = models.BooleanField(default=False)
+    assign_time = models.DateTimeField(null=True)
+    complete_time = models.DateTimeField(null=True)
