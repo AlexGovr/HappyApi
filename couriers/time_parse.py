@@ -19,9 +19,12 @@ def srl_timeint(begin, end):
     return f'{srl_time(begin)}-{srl_time(end)}'
 
 
-def srl_time(time):
-    return strftime('%H:%M', time)
+def srl_time(tstring):
+    return strftime('%H:%M', tstring)
 
 
 def datetime_now():
     return datetime.datetime.now(tz).isoformat()
+
+def parse_datetime(dtstring):
+    return datetime.datetime.strptime(dtstring, '%Y-%m-%dT%H:%M:%S.%f%z')
