@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import status, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -48,10 +49,22 @@ class CourierViewset(BaseViewset):
 
 class OrderViewset(BaseViewset):
     serializer_class = OrderSerializer
-    queryset = Order.objects.all()
+    queryset = Order.objects.filter(completed=False)
     id_fieldname = 'order_id'
     resp_data_key = 'orders'
 
-    @action(methods=['POST',], detail=True, url_path='assign')
+    @action(methods=['POST'], detail=False, url_path='assign')
     def assign(self, request):
-        return Response(status=status.HTTP_200_OK)
+        courier_id = request.data['courier_id']
+        try:
+            courier = Courier.objects.get(courier_id=courier_id)
+        except ObjectDoesNotExist:
+            pass
+        
+        orders, assign_time = courier.assign_orders(self.queryset)
+        if orders is None:
+            resp_data = {'orders': []}
+        else:
+            ids = [{'id': ordr.order_id} for ordr in orders]
+            resp_data = {'orders': ids, 'assign_time': assign_time}
+        return Response(resp_data, status=status.HTTP_200_OK)

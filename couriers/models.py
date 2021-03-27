@@ -1,6 +1,6 @@
-from time import strptime, strftime
 from datetime import datetime
 from django.db import models
+from .time_parse import parse_timeint, parse_time, srl_timeint, srl_time
 
 
 class Courier(models.Model):
@@ -15,6 +15,11 @@ class Courier(models.Model):
         'bike': 15,
         'car': 50,
     }
+
+    def __init__(self, *args, **kwargs):
+        self.whours = [parse_timeint(tint) for tint
+                        in self.working_hours.split(',')]
+        super().__init__(*args, **kwargs)
 
     @property
     def payload(self):
@@ -35,19 +40,20 @@ class Courier(models.Model):
 
     def filter_orders(self, orders):
         orders = orders.filter(courier_id=None, weight_le=self.payload)
+        orders = self.filter_byregions(orders)
         orders = self.filter_by_time(orders)
         return orders
 
+    def filter_byregions(self, orders):
+        ints = map(int, self.regions.split(','))
+        regions = set(ints)
+        orders = [ordr for ordr in orders 
+                    if ordr.region in regions]
+        return orders
+
     def filter_by_time(self, orders):
-        whours = [parse_timeint(tint) for tint in self.working_hours.split(',')]
-        chosen = []
-        for ordr in orders:
-            dhours = [parse_timeint(tint) for tint in ordr.delivery_hours.split(',')]
-            for wbegin, wend in whours:
-                for dbegin, dend in dhours:
-                    if (wbegin < dbegin < wend
-                        or wbegin < dend < wend):
-                        chosen.append(ordr)
+        orders = [ordr for ordr in orders
+                    if ordr._fits_schedule(self.whours)]
         return sorted(orders, reverse=True)
 
 
@@ -60,6 +66,24 @@ class Order(models.Model):
     completed = models.BooleanField(default=False)
     assign_time = models.DateTimeField(null=True)
     complete_time = models.DateTimeField(null=True)
+
+    def __init__(self, *args, **kwargs):
+        self.dhours = [parse_timeint(tint) for tint
+                        in self.delivery_hours.split(',')]
+        super().__init__(*args, **kwargs)
+
+    def _fits_schedule(self, whours):
+        for b, e in whours:
+            if self._fits_timeint(b, e):
+                return True
+        return False
+
+    def _fits_timeint(self, b, e):
+        for dbegin, dend in self.dhours:
+            if (e <= dbegin) or (dend <= b):
+                continue
+            return True
+        return False
 
 
 def opt_byweight(orders, sm):
@@ -82,22 +106,3 @@ def opt_byweight(orders, sm):
             max_sm = _sm
             max_arr = [ordr] + _orders
     return max_sm, max_arr
-
-
-def parse_timeint(timeinterval):
-    stamps = timeinterval.split('-')
-    begin = parse_time(stamps[0])
-    end = parse_time(stamps[1])
-    return begin, end
-
-
-def parse_time(time_str):
-    return strptime(time_str, '%H:%M')
-
-
-def srl_timeint(begin, end):
-    return f'{srl_time(begin)}-{srl_time(end)}'
-
-
-def srl_time(time):
-    return strftime('%H:%M', time)
