@@ -1,4 +1,8 @@
+import datetime
 from time import strptime, strftime
+
+_offset = datetime.timedelta(hours=3)
+tz = datetime.timezone(_offset)
 
 def parse_timeint(timeinterval):
     stamps = timeinterval.split('-')
@@ -17,3 +21,7 @@ def srl_timeint(begin, end):
 
 def srl_time(time):
     return strftime('%H:%M', time)
+
+
+def datetime_now():
+    return datetime.datetime.now(tz).isoformat()
