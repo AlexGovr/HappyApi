@@ -28,6 +28,7 @@ class Courier(models.Model):
         'bike': ern_bk,
         'car': ern_cr,
     }
+    income = 500
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -54,6 +55,10 @@ class Courier(models.Model):
             ordr.assign_time = assign_time
             ordr.save()
         return chosen, assign_time
+
+    def earn(self):
+        self.earnings += __class__.income*self.earning_ratio
+        self.save()
 
     def filter_orders(self, orders, courier_id=None):
         orders = orders.filter(courier_id=courier_id, weight__lte=self.payload)
@@ -86,6 +91,11 @@ class Courier(models.Model):
                     ordr.assign_time = None
                     ordr.save()
 
+    def reset_earning_ratio(self):
+        c_typ = self.courier_type
+        self.earning_ratio = Courier.earnratio_dict[c_typ]
+        self.save()
+
 
 class Order(models.Model):
     order_id = models.IntegerField(primary_key=True)
@@ -96,12 +106,18 @@ class Order(models.Model):
     completed = models.BooleanField(default=False)
     assign_time = models.DateTimeField(null=True)
     complete_time = models.DateTimeField(null=True)
-    deliviery_time = models.IntegerField(blank=True, default=0)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dhours = [parse_timeint(tint) for tint
                         in self.delivery_hours.split(',')]
+    @property
+    def dlvtime(self):
+        return parse_time(self.complete_time)
+    
+    @property
+    def asgntime(self):
+        return parse_time(self.assign_time)
 
     def _fits_schedule(self, whours):
         for b, e in whours:
@@ -119,8 +135,9 @@ class Order(models.Model):
     def set_complete(self, courier, complete_time):
         self.courier_id = courier
         self.complete_time = complete_time
-        self.completed = True
-        self.save()
+        if not self.completed:
+            self.completed = True
+            self.save()
     
     def __lt__(self, order):
         return self.weight < order.weight
