@@ -77,12 +77,9 @@ class CourierViewset(BaseViewset):
         data = serializer.data
         allorders = Order.objects.filter(courier_id=courier, completed=True)
         if allorders:
-            data['rating'] = rating(courier, allorders)
+            data['rating'] = '{:.2f}'.format(rating(courier, allorders))
         data['earnings'] = courier.earnings
         return Response(data)
-
-        
-
 
 
 class OrderViewset(BaseViewset):

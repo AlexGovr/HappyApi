@@ -113,11 +113,11 @@ class Order(models.Model):
                         in self.delivery_hours.split(',')]
     @property
     def dlvtime(self):
-        return parse_time(self.complete_time)
-    
+        return self.complete_time
+
     @property
     def asgntime(self):
-        return parse_time(self.assign_time)
+        return self.assign_time
 
     def _fits_schedule(self, whours):
         for b, e in whours:
