@@ -26,9 +26,14 @@ class Courier(models.Model):
     def payload(self):
         return __class__.payload_dict[self.courier_type]
 
-    def assign_orders(self, orders):
+    def assign_orders(self, orders, use_my=False):
         assign_time = datetime_now()
-        orders = sorted(self.filter_orders(orders), reverse=True)
+        courier_id = None
+        if use_my:
+            courier_id = self
+
+        orders = self.filter_orders(orders, courier_id=courier_id)
+        orders = sorted(orders, reverse=True)
         _, chosen = opt_byweight(orders, self.payload)
         if not chosen:
             return [], None
@@ -38,8 +43,8 @@ class Courier(models.Model):
             ordr.save()
         return chosen, assign_time
 
-    def filter_orders(self, orders):
-        orders = orders.filter(courier_id=None, weight__lte=self.payload)
+    def filter_orders(self, orders, courier_id=None):
+        orders = orders.filter(courier_id=courier_id, weight__lte=self.payload)
         orders = self.filter_byregions(orders)
         orders = self.filter_by_time(orders)
         return orders
@@ -61,7 +66,7 @@ class Courier(models.Model):
                 or self.regions != prev.regions
                 or self.payload < prev.payload):
             orders = Order.objects.filter(courier_id=self.courier_id, completed=False)
-            _orders, _ = self.assign_orders(orders)
+            _orders, _ = self.assign_orders(orders, use_my=True)
             # set lost orders unassigned
             for ordr in orders:
                 if ordr not in _orders:
