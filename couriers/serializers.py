@@ -48,7 +48,7 @@ class CourierSerializer(CustomTimeSerializer):
 
     class Meta:
         model = Courier
-        fields = '__all__'
+        exclude = ['earnings', 'earning_ratio',]
 
 
 class OrderSerializer(CustomTimeSerializer):
@@ -57,4 +57,4 @@ class OrderSerializer(CustomTimeSerializer):
 
     class Meta:
         model = Order
-        fields = ['order_id', 'delivery_hours', 'region', 'weight']
+        fields = ['order_id', 'delivery_hours', 'region', 'weight',]
