@@ -1,7 +1,7 @@
 import datetime
 from time import strptime, strftime
 
-_offset = datetime.timedelta(hours=3)
+_offset = datetime.timedelta(hours=0)
 tz = datetime.timezone(_offset)
 
 def parse_timeint(timeinterval):
