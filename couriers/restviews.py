@@ -7,6 +7,7 @@ from rest_framework.decorators import action
 from .models import Courier, Order
 from .time_parse import parse_datetime
 from .serializers import CourierSerializer, OrderSerializer
+from .stats import rating
 
 
 class BaseViewset(viewsets.ModelViewSet):
@@ -66,6 +67,23 @@ class CourierViewset(BaseViewset):
         
         return Response(serializer.data)
 
+    def retrieve(self, *args, **kwargs):
+        pk = kwargs.pop('pk')
+        courier = get_or_400(Courier, courier_id=pk)
+        if isinstance(courier, Response):
+            return courier
+
+        serializer = self.serializer_class(instance=courier, read_only=True)
+        data = serializer.data
+        allorders = Order.objects.filter(courier_id=courier, completed=True)
+        if allorders:
+            data['rating'] = rating(courier, allorders)
+        data['earnings'] = courier.earnings
+        return Response(data)
+
+        
+
+
 
 class OrderViewset(BaseViewset):
     serializer_class = OrderSerializer
@@ -76,17 +94,17 @@ class OrderViewset(BaseViewset):
     @action(methods=['POST'], detail=False, url_path='assign')
     def assign(self, request):
         courier_id = request.data['courier_id']
-        cour_or_404 = get_or_400(Courier, courier_id=courier_id)
-        if isinstance(cour_or_404, Response):
-            return cour_or_404
+        courier = get_or_400(Courier, courier_id=courier_id)
+        if isinstance(courier, Response):
+            return courier
 
-        courier = cour_or_404
         active_orders = self.queryset.filter(completed=False, courier_id=courier_id)
         if active_orders:
             orders = active_orders
             assign_time = orders[0].assign_time
         else:
             orders, assign_time = courier.assign_orders(self.queryset)
+            courier.reset_earning_ratio()
 
         if assign_time is None:
             resp_data = {'orders': []}
@@ -117,6 +135,11 @@ class OrderViewset(BaseViewset):
 
         complete_time = parse_datetime(complete_time)
         order.set_complete(courier, complete_time)
+
+        # check if orders set is complete
+        active_orders = self.queryset.filter(completed=False, courier_id=courier_id)
+        if not active_orders:
+            courier.earn()
 
         resp_data = {'order_id': order_id}
         return Response(resp_data, status=status.HTTP_200_OK)
