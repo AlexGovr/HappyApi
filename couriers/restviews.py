@@ -59,8 +59,6 @@ class CourierViewset(BaseViewset):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         # check orders are valid after courier is changed
-        print(serializer.instance)
-        print('old', old.payload)
         serializer.instance.perform_changes(old)
 
         if getattr(courier, '_prefetched_objects_cache', None):
@@ -78,7 +76,7 @@ class OrderViewset(BaseViewset):
     @action(methods=['POST'], detail=False, url_path='assign')
     def assign(self, request):
         courier_id = request.data['courier_id']
-        cour_or_404 = get_or_400(Courier, 'courier_id', courier_id)
+        cour_or_404 = get_or_400(Courier, courier_id=courier_id)
         if isinstance(cour_or_404, Response):
             return cour_or_404
 
@@ -90,7 +88,7 @@ class OrderViewset(BaseViewset):
         else:
             orders, assign_time = courier.assign_orders(self.queryset)
 
-        if orders is None:
+        if assign_time is None:
             resp_data = {'orders': []}
         else:
             ids = [{'id': ordr.order_id} for ordr in orders]
@@ -103,27 +101,37 @@ class OrderViewset(BaseViewset):
         courier_id = request.data['courier_id']
         order_id = request.data['order_id']
         complete_time = request.data['complete_time']
+        
+        order = get_or_400(Order, order_id=order_id)
+        if isinstance(order, Response):
+            return order
 
-        cour_or_404 = get_or_400(Courier, 'courier_id', courier_id)
-        if isinstance(cour_or_404, Response):
-            return cour_or_404
+        courier = get_or_400(Courier, courier_id=courier_id)
+        if isinstance(courier, Response):
+            return courier
 
-        ord_or_404 = get_or_400(Order, 'order_id', order_id)
-        if isinstance(ord_or_404, Response):
-            return ord_or_404
+        if order.courier_id is None:
+            return resp400('order is not assigned')
+        if order.courier_id != courier:
+            return resp400('order is assigned to another courier')
 
         complete_time = parse_datetime(complete_time)
-        ord_or_404.set_complete(cour_or_404, complete_time)
+        order.set_complete(courier, complete_time)
 
         resp_data = {'order_id': order_id}
         return Response(resp_data, status=status.HTTP_200_OK)
 
 
-def get_or_400(model, field_name, val):
+def get_or_400(model, **kwargs):
     try:
-        inst = model.objects.get(**{field_name: val})
+        inst = model.objects.get(**kwargs)
         return inst
     except ObjectDoesNotExist:
         name = model.__name__.lower()
-        resp_data = {'detail': f'no {name} with such {field_name}'}
-        return Response(resp_data, status = status.HTTP_400_BAD_REQUEST)
+        fieldnames = ', '.join(kwargs.keys())
+        resp_data = {'detail': f'no {name} with such [{fieldnames}] fields'}
+        return Response(resp_data, status=status.HTTP_400_BAD_REQUEST)
+
+
+def resp400(detail):
+    return Response({'detail': detail}, status=status.HTTP_400_BAD_REQUEST)
