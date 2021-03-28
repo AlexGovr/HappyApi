@@ -1,7 +1,13 @@
 from datetime import datetime
 from django.db import models
+from django.core.exceptions import ValidationError
 from .time_parse import (parse_timeint, parse_time, datetime_now,
                             srl_timeint, srl_time)
+
+
+def float_validator(f):
+    if f <= 0:
+        raise ValidationError('value must be > 0')
 
 
 class Courier(models.Model):
@@ -100,7 +106,7 @@ class Courier(models.Model):
 class Order(models.Model):
     order_id = models.IntegerField(primary_key=True)
     region = models.IntegerField(blank=False)
-    weight = models.FloatField(blank=False)
+    weight = models.FloatField(blank=False, validators=[float_validator])
     delivery_hours = models.CharField(max_length=240, blank=False)
     courier_id = models.ForeignKey(Courier, null=True, on_delete=models.SET_NULL)
     completed = models.BooleanField(default=False)
