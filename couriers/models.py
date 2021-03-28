@@ -6,15 +6,27 @@ from .time_parse import (parse_timeint, parse_time, datetime_now,
 
 class Courier(models.Model):
     type_choices = [('foot', 'foot'), ('bike', 'bike'), ('car', 'car'),]
+    ern_ft = 2
+    ern_bk = 5
+    ern_cr = 9
+    earnratio_choices = [(ern_ft, 'foot'), (ern_bk, 'bike'), (ern_cr, 'car'),]
+
     courier_id = models.IntegerField(primary_key=True)
     courier_type = models.CharField(max_length=20, choices=type_choices, blank=False)
     regions = models.CharField(max_length=120, blank=False)
     working_hours = models.CharField(max_length=240, blank=False)
+    earnings = models.FloatField(default=0)
+    earning_ratio = models.IntegerField(choices=earnratio_choices, default=ern_ft)
 
     payload_dict = {
         'foot': 10,
         'bike': 15,
         'car': 50,
+    }
+    earnratio_dict = {
+        'foot': ern_ft,
+        'bike': ern_bk,
+        'car': ern_cr,
     }
 
     def __init__(self, *args, **kwargs):
@@ -84,6 +96,7 @@ class Order(models.Model):
     completed = models.BooleanField(default=False)
     assign_time = models.DateTimeField(null=True)
     complete_time = models.DateTimeField(null=True)
+    deliviery_time = models.IntegerField(blank=True, default=0)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
