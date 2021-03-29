@@ -301,4 +301,4 @@ Happy API using!
 
 
 
-P.s. 
+P.s. for YandexSchool: I didn't managed to permanenly add ssh so run ```eval `ssh-agent -s` ``` and ```ssh-add /home/entrant/.ssh/id_ed``` to get access to the GitHub repository
