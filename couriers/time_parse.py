@@ -4,6 +4,7 @@ from time import strptime, strftime
 _offset = datetime.timedelta(hours=0)
 tz = datetime.timezone(_offset)
 
+
 def parse_timeint(timeinterval):
     stamps = timeinterval.split('-')
     begin = parse_time(stamps[0])
@@ -25,6 +26,7 @@ def srl_time(tstring):
 
 def datetime_now():
     return datetime.datetime.now(tz).isoformat()
+
 
 def parse_datetime(dtstring):
     return datetime.datetime.strptime(dtstring, '%Y-%m-%dT%H:%M:%S.%f%z')

@@ -20,8 +20,9 @@ class CustomTimeSerializer(serializers.ModelSerializer):
         if whours:
             # raise if not in list
             if not isinstance(whours, list):
-                raise serializers.ValidationError(f'{self.time_field_name} values intervals '
-                                                    'must be contained in a list')
+                s = (f'{self.time_field_name} values intervals'
+                     + 'must be contained in a list')
+                raise serializers.ValidationError(s)
             data[self.time_field_name] = ','.join(whours)
         try:
             return super().to_internal_value(data)
@@ -30,7 +31,6 @@ class CustomTimeSerializer(serializers.ModelSerializer):
             # to prevent further validation error
             data[self.time_field_name] = whours
             raise e
-
 
     def to_representation(self, inst):
         '''transform time intervals str to list'''
@@ -49,13 +49,14 @@ class CustomTimeSerializer(serializers.ModelSerializer):
         _str = ','.join(_str_list)
         return _str
 
+
 class CourierSerializer(CustomTimeSerializer):
 
     time_field_name = 'working_hours'
 
     class Meta:
         model = Courier
-        exclude = ['earnings', 'earning_ratio',]
+        exclude = ['earnings', 'earning_ratio', ]
 
 
 class OrderSerializer(CustomTimeSerializer):
@@ -64,4 +65,4 @@ class OrderSerializer(CustomTimeSerializer):
 
     class Meta:
         model = Order
-        fields = ['order_id', 'delivery_hours', 'region', 'weight',]
+        fields = ['order_id', 'delivery_hours', 'region', 'weight', ]

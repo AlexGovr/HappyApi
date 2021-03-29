@@ -1,7 +1,6 @@
 from copy import deepcopy
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import status, viewsets
-from rest_framework.exceptions import ValidationError, bad_request
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Courier, Order
@@ -31,13 +30,14 @@ class BaseViewset(viewsets.ModelViewSet):
                 resp_ids.append({'id': _dat[self.id_fieldname]})
             else:
                 errors = self.collect_errors(data[i:])
-                resp_data = {'validation_error':{self.resp_data_key: errors}}
+                resp_data = {'validation_error': {self.resp_data_key: errors}}
                 return Response(resp_data, status=status.HTTP_400_BAD_REQUEST)
 
         _ = [self.perform_create(srl) for srl in allsrl]
         headers = self.get_success_headers(allsrl[0].data)
         resp_data = {self.resp_data_key: resp_ids}
-        return Response(resp_data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(resp_data,
+                        status=status.HTTP_201_CREATED, headers=headers)
 
     def collect_errors(self, data):
         errdata = []
@@ -56,7 +56,7 @@ class BaseViewset(viewsets.ModelViewSet):
         model = self.serializer_class.Meta.model
         model.objects.all().delete()
         return Response(status=status.HTTP_200_OK)
-    
+
     def err_details(self, errors):
         return {field: str(err[0]) for (field, err) in errors.items()}
 
@@ -74,7 +74,9 @@ class CourierViewset(BaseViewset):
         courier = self.get_object()
         # remember old courier object
         old = deepcopy(courier)
-        serializer = self.get_serializer(instance=courier, data=request.data, partial=partial)
+        serializer = self.get_serializer(instance=courier,
+                                         data=request.data,
+                                         partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         # check orders are valid after courier is changed
@@ -82,7 +84,7 @@ class CourierViewset(BaseViewset):
 
         if getattr(courier, '_prefetched_objects_cache', None):
             courier._prefetched_objects_cache = {}
-        
+
         return Response(serializer.data)
 
     def retrieve(self, *args, **kwargs):
@@ -113,7 +115,8 @@ class OrderViewset(BaseViewset):
         if isinstance(courier, Response):
             return courier
 
-        active_orders = self.queryset.filter(completed=False, courier_id=courier_id)
+        active_orders = self.queryset.filter(completed=False,
+                                             courier_id=courier_id)
         if active_orders:
             orders = active_orders
             assign_time = orders[0].assign_time
@@ -134,7 +137,7 @@ class OrderViewset(BaseViewset):
         courier_id = request.data['courier_id']
         order_id = request.data['order_id']
         complete_time = request.data['complete_time']
-        
+
         order = get_or_400(Order, order_id=order_id)
         if isinstance(order, Response):
             return order
@@ -152,7 +155,8 @@ class OrderViewset(BaseViewset):
         order.set_complete(courier, complete_time)
 
         # check if orders set is complete
-        active_orders = self.queryset.filter(completed=False, courier_id=courier_id)
+        active_orders = self.queryset.filter(completed=False,
+                                             courier_id=courier_id)
         if not active_orders:
             courier.earn()
 

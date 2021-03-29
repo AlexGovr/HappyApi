@@ -1,8 +1,6 @@
-from datetime import datetime
 from django.db import models
 from django.core.exceptions import ValidationError
-from .time_parse import (parse_timeint, parse_time, datetime_now,
-                            srl_timeint, srl_time)
+from .time_parse import parse_timeint, datetime_now
 
 
 def float_validator(f):
@@ -11,18 +9,20 @@ def float_validator(f):
 
 
 class Courier(models.Model):
-    type_choices = [('foot', 'foot'), ('bike', 'bike'), ('car', 'car'),]
+    type_choices = [('foot', 'foot'), ('bike', 'bike'), ('car', 'car'), ]
     ern_ft = 2
     ern_bk = 5
     ern_cr = 9
-    earnratio_choices = [(ern_ft, 'foot'), (ern_bk, 'bike'), (ern_cr, 'car'),]
+    earnratio_choices = [(ern_ft, 'foot'), (ern_bk, 'bike'), (ern_cr, 'car'), ]
 
     courier_id = models.IntegerField(primary_key=True)
-    courier_type = models.CharField(max_length=20, choices=type_choices, blank=False)
+    courier_type = models.CharField(max_length=20,
+                                    choices=type_choices, blank=False)
     regions = models.CharField(max_length=120, blank=False)
     working_hours = models.CharField(max_length=240, blank=False)
     earnings = models.FloatField(default=0)
-    earning_ratio = models.IntegerField(choices=earnratio_choices, default=ern_ft)
+    earning_ratio = models.IntegerField(choices=earnratio_choices,
+                                        default=ern_ft)
 
     payload_dict = {
         'foot': 10,
@@ -39,7 +39,7 @@ class Courier(models.Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.whours = [parse_timeint(tint) for tint
-                        in self.working_hours.split(',')]
+                       in self.working_hours.split(',')]
 
     @property
     def payload(self):
@@ -75,20 +75,21 @@ class Courier(models.Model):
     def filter_byregions(self, orders):
         ints = map(int, self.regions.split(','))
         regions = set(ints)
-        orders = [ordr for ordr in orders 
-                    if ordr.region in regions]
+        orders = [ordr for ordr in orders
+                  if ordr.region in regions]
         return orders
 
     def filter_by_time(self, orders):
         orders = [ordr for ordr in orders
-                    if ordr._fits_schedule(self.whours)]
+                  if ordr._fits_schedule(self.whours)]
         return orders
 
     def perform_changes(self, prev):
         if (self.working_hours != prev.working_hours
                 or self.regions != prev.regions
                 or self.payload < prev.payload):
-            orders = Order.objects.filter(courier_id=self.courier_id, completed=False)
+            orders = Order.objects.filter(courier_id=self.courier_id,
+                                          completed=False)
             _orders, _ = self.assign_orders(orders, use_my=True)
             # set lost orders unassigned
             for ordr in orders:
@@ -108,7 +109,8 @@ class Order(models.Model):
     region = models.IntegerField(blank=False)
     weight = models.FloatField(blank=False, validators=[float_validator])
     delivery_hours = models.CharField(max_length=240, blank=False)
-    courier_id = models.ForeignKey(Courier, null=True, on_delete=models.SET_NULL)
+    courier_id = models.ForeignKey(Courier, null=True,
+                                   on_delete=models.SET_NULL)
     completed = models.BooleanField(default=False)
     assign_time = models.DateTimeField(null=True)
     complete_time = models.DateTimeField(null=True)
@@ -116,7 +118,8 @@ class Order(models.Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dhours = [parse_timeint(tint) for tint
-                        in self.delivery_hours.split(',')]
+                       in self.delivery_hours.split(',')]
+
     @property
     def dlvtime(self):
         return self.complete_time
@@ -144,10 +147,10 @@ class Order(models.Model):
         if not self.completed:
             self.completed = True
             self.save()
-    
+
     def __lt__(self, order):
         return self.weight < order.weight
-    
+
     def __gt__(self, order):
         return self.weight > order.weight
 

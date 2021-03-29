@@ -3,28 +3,26 @@ import datetime
 from time import time
 from couriers.time_parse import parse_datetime
 
+host = '178.154.195.226'
+
 
 def srl_datetime(dt):
     return dt.strftime('%Y-%m-%dT%H:%M:%S.%f%z') + 'Z'
 
 
 def tshift(dtime):
-    print(dtime)
     def shift(minutes):
+        '''shifts initial dtime by minutes 
+        and returns new datetime object'''
         minutes += dtime.minute
         hours = minutes // 59 + dtime.hour
         minutes = minutes % 59
         return datetime.datetime(dtime.year, dtime.month, dtime.day, minute=minutes, hour=hours)
     return shift
 
-server = '178.154.195.226'
-local = '127.0.0.1:8000'
-host = server
-
 
 def test(descr, r, assrtto):
     print(descr)
-    _len = len(assrtto)
     check = r.status_code, r.reason
     assert check == assrtto, ((check, r.text), assrtto)
     print(r.text)
@@ -58,7 +56,6 @@ def complete_order(cour_id, ord_id, t):
         'order_id': ord_id,
         'complete_time': t
     }
-    print(t)
     r = requests.post(f'http://{host}/orders/complete', json=json)
     return r
 
@@ -84,15 +81,6 @@ def create_order(*args):
     dhours,
     weight) = args
     return dict(order_id=_id, region=region, delivery_hours=dhours, weight=weight)
-
-
-def show(r, *args):
-    if r.status_code < 500:
-        args += r.status_code, r.reason, r.text
-        print(*args)
-    else:
-        args += r.status_code, r.reason
-        print(*args)
 
 
 def run():
