@@ -30,7 +30,6 @@ class BaseViewset(viewsets.ModelViewSet):
                 allsrl.append(srl)
                 resp_ids.append({'id': _dat[self.id_fieldname]})
             else:
-                f_srl = self.get_serializer
                 errors = self.collect_errors(data[i:])
                 resp_data = {'validation_error':{self.resp_data_key: errors}}
                 return Response(resp_data, status=status.HTTP_400_BAD_REQUEST)
@@ -46,8 +45,8 @@ class BaseViewset(viewsets.ModelViewSet):
             srl = self.get_serializer(data=_dat)
             if not srl.is_valid():
                 dtl = {'id': _dat[self.id_fieldname]}
-                # add = srl.errors['order_id'][0].__str__()
-                add = {field: str(err[0]) for (field, *err) in srl.errors.items()}
+                errors = srl.errors
+                add = {field: str(err[0]) for (field, err) in errors.items()}
                 dtl.update({'detail': add})
                 errdata.append(dtl)
         return errdata
