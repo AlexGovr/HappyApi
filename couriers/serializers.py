@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from .models import Courier, Order, parse_timeint, srl_timeint
+from .models import Courier, Order
+from .time_parse import parse_timeint, srl_timeint
 
 
 class CustomTimeSerializer(serializers.ModelSerializer):
