@@ -18,12 +18,19 @@ class CustomTimeSerializer(serializers.ModelSerializer):
         '''transform time intervals list to a comma-separated string'''
         whours = data.get(self.time_field_name, None)
         if whours:
-            # raise if not list
+            # raise if not in list
             if not isinstance(whours, list):
-                raise serializers.ValidationError(f'{self.time_field_name} values intervals'
+                raise serializers.ValidationError(f'{self.time_field_name} values intervals '
                                                     'must be contained in a list')
             data[self.time_field_name] = ','.join(whours)
-        return super().to_internal_value(data)
+        try:
+            return super().to_internal_value(data)
+        except ValidationError as e:
+            # return data back to list form
+            # to prevent further validation error
+            data[self.time_field_name] = whours
+            raise e
+
 
     def to_representation(self, inst):
         '''transform time intervals str to list'''
