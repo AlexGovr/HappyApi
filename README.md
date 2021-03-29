@@ -120,3 +120,15 @@ sudo systemct status nginx
 ```
 python manage.py collectstatic
 ```
+# API reference
+## POST /couriers
+Create new couriers
+Request must contain json with a list of couriers' data
+Each data element must provide unic courier_id, courier_type ("car", "bike", "foot"), regions and working hours field. All fields are requiried
+Example request:
+
+## POST /couriers
+## POST /couriers
+## POST /couriers
+## POST /couriers
+## GET /couriers/$courier_id
