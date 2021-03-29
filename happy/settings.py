@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 import os
 from pathlib import Path
-from config import SECRET_KEY, DEBUG, ALLOWED_HOSTS
+from config import SECRET_KEY, DEBUG, ALLOWED_HOSTS, DATABASES
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -64,22 +64,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'happy.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/3.1/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'happy',
-        'USER': 'alex',
-        'PASSWORD': 'admin',
-        'HOST': 'localhost',
-        'PORT': '',
-    }
-}
-
 
 
 # Password validation
