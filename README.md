@@ -296,3 +296,5 @@ To test all API methods simply run
 ```
 python manage.py runscript test.py
 ```
+
+Happy API using!
