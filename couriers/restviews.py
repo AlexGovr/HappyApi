@@ -31,9 +31,7 @@ class BaseViewset(viewsets.ModelViewSet):
                 resp_ids.append({'id': _dat[self.id_fieldname]})
             else:
                 f_srl = self.get_serializer
-                errors = [{'id': _dat[self.id_fieldname]}
-                            for _dat in data[i:]
-                            if not f_srl(data=_dat).is_valid()]
+                errors = self.collect_errors(data[i:])
                 resp_data = {'validation_error':{self.resp_data_key: errors}}
                 return Response(resp_data, status=status.HTTP_400_BAD_REQUEST)
 
@@ -41,6 +39,18 @@ class BaseViewset(viewsets.ModelViewSet):
         headers = self.get_success_headers(allsrl[0].data)
         resp_data = {self.resp_data_key: resp_ids}
         return Response(resp_data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def collect_errors(self, data):
+        errdata = []
+        for _dat in data:
+            srl = self.get_serializer(data=_dat)
+            if not srl.is_valid():
+                dtl = {'id': _dat[self.id_fieldname]}
+                # add = srl.errors['order_id'][0].__str__()
+                add = {field: str(err[0]) for (field, *err) in srl.errors.items()}
+                dtl.update({'detail': add})
+                errdata.append(dtl)
+        return errdata
 
 
 class CourierViewset(BaseViewset):
