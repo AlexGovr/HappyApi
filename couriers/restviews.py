@@ -46,10 +46,19 @@ class BaseViewset(viewsets.ModelViewSet):
             if not srl.is_valid():
                 dtl = {'id': _dat[self.id_fieldname]}
                 errors = srl.errors
-                add = {field: str(err[0]) for (field, err) in errors.items()}
+                add = self.err_details(errors)
                 dtl.update({'detail': add})
                 errdata.append(dtl)
         return errdata
+
+    @action(methods=['POST'], detail=False, url_path='deleteall')
+    def delete_all(self, request):
+        model = self.serializer_class.Meta.model
+        model.objects.all().delete()
+        return Response(status=status.HTTP_200_OK)
+    
+    def err_details(self, errors):
+        return {field: str(err[0]) for (field, err) in errors.items()}
 
 
 class CourierViewset(BaseViewset):
