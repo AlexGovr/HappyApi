@@ -73,11 +73,14 @@ ExecStart=/home/username/myprojectdir/myprojectenv/bin/gunicorn \
           --workers 3 \
           --bind unix:/run/gunicorn.sock \
           myproject.wsgi:application
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
 ```
+here we tell systemd to always restart gunicorn on reboot, server failure, etc
 you may change the number of workers as you need
+
 3. Start and enable the gunicorn socket
 ```
 sudo systemctl start gunicorn.socket
@@ -120,6 +123,10 @@ sudo systemct status nginx
 8. Collect static to use django admin panel
 ```
 python manage.py collectstatic
+```
+9. Tell linux to autostart nginx on reboot if you need
+```
+sudo update-rc.d -f nginx enable
 ```
 # API reference
 ## POST /couriers
