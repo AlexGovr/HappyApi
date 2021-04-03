@@ -117,9 +117,11 @@ class OrderViewset(BaseViewset):
 
         active_orders = self.queryset.filter(completed=False,
                                              courier_id=courier_id)
+        # if there are active orders return them
         if active_orders:
             orders = active_orders
             assign_time = orders[0].assign_time
+        # assign new otherwise
         else:
             orders, assign_time = courier.assign_orders(self.queryset)
             courier.reset_earning_ratio()
@@ -175,5 +177,3 @@ def get_or_400(model, **kwargs):
         return Response(resp_data, status=status.HTTP_400_BAD_REQUEST)
 
 
-def resp400(detail):
-    return Response({'detail': detail}, status=status.HTTP_400_BAD_REQUEST)
