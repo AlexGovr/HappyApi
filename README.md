@@ -2,7 +2,7 @@
 REST API service for delivery web-application
 
 # Installation
-1. Install nginx, postgresql and all needed linux items we need for development:
+1. Install nginx, postgresql and all linux items we need for development:
 
 ```sudo apt install python3-pip python3-dev libpq-dev postgresql postgresql-contrib nginx```
 
@@ -65,10 +65,10 @@ Requires=gunicorn.socket
 After=network.target
 
 [Service]
-User=sammy
+User=username
 Group=www-data
-WorkingDirectory=/home/sammy/myprojectdir
-ExecStart=/home/sammy/myprojectdir/myprojectenv/bin/gunicorn \
+WorkingDirectory=/home/username/myprojectdir
+ExecStart=/home/username/myprojectdir/myprojectenv/bin/gunicorn \
           --access-logfile - \
           --workers 3 \
           --bind unix:/run/gunicorn.sock \
@@ -77,13 +77,14 @@ ExecStart=/home/sammy/myprojectdir/myprojectenv/bin/gunicorn \
 [Install]
 WantedBy=multi-user.target
 ```
+you may change the number of workers as you need
 3. Start and enable the gunicorn socket
 ```
 sudo systemctl start gunicorn.socket
 sudo systemctl enable gunicorn.socket
 ```
 4. Configure Nginx to Proxy Pass to Gunicorn
-Create /etc/nginx/sites-available/<yourprojectname> file with contents:
+Create /etc/nginx/sites-available/yourprojectname file with contents:
 
 ```
 server {
@@ -124,7 +125,7 @@ python manage.py collectstatic
 ## POST /couriers
 Creates new couriers
 Request must contain json with a list of couriers' data
-Each data element must provide unic courier_id, courier_type , regions and working hours field. All fields are requiried
+Each data element must provide unic courier_id, courier_type, regions and working hours field. All fields are requiried
 Input fields:
     courier_id - integer
     courier_type - one of ["car", "bike", "foot"] strings
