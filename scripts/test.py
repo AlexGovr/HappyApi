@@ -1,6 +1,5 @@
 import requests
 import datetime
-from time import time
 from couriers.time_parse import parse_datetime
 
 host = '178.154.195.226'
@@ -17,12 +16,13 @@ def tshift(dtime):
         minutes += dtime.minute
         hours = minutes // 59 + dtime.hour
         minutes = minutes % 59
-        return datetime.datetime(dtime.year, dtime.month, dtime.day, minute=minutes, hour=hours)
+        return datetime.datetime(dtime.year, dtime.month, 
+                                 dtime.day, minute=minutes, hour=hours)
     return shift
 
 
 def test(descr, r, assrtto):
-    print(descr)
+    print('\n', descr)
     check = r.status_code, r.reason
     assert check == assrtto, ((check, r.text), assrtto)
     print(r.text)
@@ -80,7 +80,8 @@ def create_order(*args):
     region,
     dhours,
     weight) = args
-    return dict(order_id=_id, region=region, delivery_hours=dhours, weight=weight)
+    return dict(order_id=_id, region=region, 
+                delivery_hours=dhours, weight=weight)
 
 
 def run():
@@ -136,14 +137,17 @@ def run():
     ]
 
     bad_orders = [
+        [0, 2, '10:00-12:00,13:00-14:00', 5],
         [10, 3, ['10:00-12:00', '13:00-14:00'], -35],
         [11, 4, ['10:00-12:00', '13:00-14:'], 14],
+        [11, 4, ['10:00-12:00', '17:00-14:00'], 14],
     ]
 
     delete_orders()
     delete_couriers()
 
-    test('post couriers', post_couriers({'data': [cour, cour1]}), (201, 'Created'))
+    json = {'data': [cour, cour1]}
+    test('post couriers', post_couriers(json), (201, 'Created'))
 
     test('patch courier 0', patch_courier(cour, 0), (200, 'OK'))
     test('patch courier 1', patch_courier(cour1, 1), (200, 'OK'))
@@ -164,8 +168,14 @@ def run():
 
     test('assign orders id=1', assign_orders(1), (200, 'OK'))
 
-    json={'courier_id': 0, 'order_id': 100, 'complete_time':"2021-01-10T10:33:01.42Z"}
-    test('complete not existing order', complete_order(0, 100, shift(100)), (400, 'Bad Request'))
+    json={
+        'courier_id': 0,
+        'order_id': 100,
+        'complete_time':"2021-01-10T10:33:01.42Z"
+    }
+    test('complete not existing order',
+         complete_order(0, 100, shift(100)),
+         (400, 'Bad Request'))
     
     test('complete order 12', complete_order(0, 12, shift(15)), (200, 'OK'))
     test('complete order 14', complete_order(0, 14, shift(25)), (200, 'OK'))
@@ -179,7 +189,11 @@ def run():
 
     test('assign orders id=0', assign_orders(0), (200, 'OK'))
 
-    json={'courier_id': 0, 'order_id': 11, 'complete_time':"2021-01-10T10:33:01.42Z"}
+    json={
+        'courier_id': 0,
+        'order_id': 11,
+        'complete_time':"2021-01-10T10:33:01.42Z"
+    }
     test('complete order 11', complete_order(0, 11, shift(15)), (200, 'OK'))
     json['order_id'] = 21
     test('complete order 21', complete_order(0, 21, shift(17)), (200, 'OK'))
